@@ -1,0 +1,49 @@
+﻿version: '3.4'
+
+services:
+  app:
+    container_name: app
+    ports:
+      - "8080:8080"
+    build:
+      context: .
+      dockerfile: OrderManager/Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+    networks:
+      - ordermanager
+      
+  frontend:
+    container_name: frontend
+    build: ./om-front-end
+    volumes:
+      - './:/app'
+      - '/app/node_modules'
+    ports:
+      - 3000:3000
+    stdin_open: true
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+    command: npm start
+    networks:
+      - ordermanager
+        
+  db:
+    container_name: db
+    image: postgres:latest
+    restart: always
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./Database/start_script.sql:/docker-entrypoint-initdb.d/docker_postgres_init.sql
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=ordersdb
+      - POSTGRES_PASSWORD=ordersdb
+    networks:
+      - ordermanager
+
+networks:
+  ordermanager:
+    driver: bridge
